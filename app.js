@@ -4,14 +4,30 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var http = require('http').Server(app);
+var socket_io = require('socket.io');
+// var dl = require('delivery');
+// var fs = require('fs');
 
-var index = require('./routes/index');
+
+
 
 var app = express();
 
+// Socket.io
+var io = socket_io();
+app.io = io;
+
+var index = require('./routes/index')(io);
+
 // view engine setup
-// app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'jade');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+
+// Socket.io events
+// io.on("connection", function(socket){
+// 	console.log("A user connected");
+// });
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
