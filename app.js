@@ -18,16 +18,12 @@ var app = express();
 var io = socket_io();
 app.io = io;
 
+// Routes
 var index = require('./routes/index')(io);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
-// Socket.io events
-// io.on("connection", function(socket){
-// 	console.log("A user connected");
-// });
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));

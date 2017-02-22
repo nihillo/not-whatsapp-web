@@ -3,22 +3,6 @@ import ReactDOM from 'react-dom';
 
 var socket = io();
 
-// class App extends React.Component {
-//   render () {
-//     return (
-//     	<div>
-//     		<div>
-//     			<h1>This is not Whatsapp web</h1>
-//     			<p> This is the app component</p>
-//     			<Comp></Comp>
-//     		</div>
-//     	</div>
-    	
-//     );
-//   }
-// }
-
-
 class ChatBox extends React.Component {
 	constructor(props) {
 		super(props);
@@ -26,7 +10,12 @@ class ChatBox extends React.Component {
 			messageList: []
 		}
 
+		// Fix 'this' in methods which use events
 		this.handleMessageSubmit = this.handleMessageSubmit.bind(this);
+		// this.listenMessages = this.listenMessages.bind(this);
+		this.addNewMessage = this.addNewMessage.bind(this);
+
+		// this.listenMessages();
 	}
 
 	render() {
@@ -40,20 +29,44 @@ class ChatBox extends React.Component {
 		);
 	}
 
+	componentDidMount() {  
+	  socket.once('allMessages', function (messages) {
+	  	var messageList = this.limitMessages(messages, 10);
+	    this.setState({ messageList: messageList });
+	  }.bind(this));
+
+	  socket.on('newMessage', function (message) {
+	    this.addNewMessage(message);
+	  }.bind(this));
+
+	  // this.listenMessages();
+	}
+
 
 	handleMessageSubmit(message) {
+		// console.log('Message sent');
 		socket.emit('message', message);
-		this.addNewMessage(message);
+		// this.addNewMessage(message);
 	}
 
 	addNewMessage(message) {
+		// console.log(message);
+		// console.log(this.state.messageList)
 		var messageList = this.state.messageList;
-		message.id = messageList.length + 1;
-		if (messageList.length > 100) {
+		messageList = this.limitMessages(messageList, 100);
+
+		messageList.push(message);
+		// console.log(messageList);
+		this.setState({messageList: messageList});
+	}
+
+	limitMessages(messageList, length) {
+		while (messageList.length > length) {
 			messageList.shift();
 		}
-		messageList.push(message);
-		this.setState({messageList: messageList});
+
+		// console.log(messageList);
+		return messageList;
 	}
 }
 
