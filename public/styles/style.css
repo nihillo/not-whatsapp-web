@@ -6,3 +6,38 @@
 // a {
 //   color: #00B7FF;
 // }
+
+#app {
+	width: 100%;
+	height: 100vh;
+}
+
+.login-view {
+	width: 100%;
+	height: 100%;
+	background-color: #009688;
+}
+
+.login-card-wrapper {
+	width: 200px;
+	margin: 0 auto;
+}
+
+.login-card {
+	// width: 100%;
+	position: absolute;
+	top: 10vh;
+}
+
+.icon-select {
+	cursor: pointer;
+}
+
+.icon-select .icon {
+	display: inline-block;
+}
+
+.selected-icon img {
+	width: 90px;
+	height: 90px;
+}
