@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {Login} from './login.jsx';
-import {ChatBox} from './chatbox.jsx';
 
-var socket = io();
+import {dataService} from './service/data-service.js';
+
+import {Login} from './login.jsx';
+import {Chat} from './chat.jsx';
 
 class App extends React.Component {
 	constructor(props) {
@@ -20,34 +21,25 @@ class App extends React.Component {
 
 		// Fix 'this' in methods which use events
 		this.login = this.login.bind(this);
-		// this.setAvatar = this.setAvatar.bind(this);
 	}
 
 	render() {
 		if (this.state.allowLogin) {
 			return(
-				<ChatBox/>
+				<div className="app-wrapper">
+					<Chat user={this.state.user} />
+				</div>	
 			);
 		}
 
 		return(
-			<Login onLoginSubmit={this.login}/>
+			<div className="app-wrapper">
+				<Login onLoginSubmit={this.login}/>
+			</div>
 		);
 	}
 
-	// setAvatar(avatar) {
-	// 	this.setState({
-	// 		user: {
-	// 			username: this.state.user.username,
-	// 			avatar: avatar,
-	// 			status: this.state.user.status
-	// 		}
-	// 	})
-	// }
-
 	login(user) {
-		// event.preventDefault();
-		// console.log('A punto de hacer login');
 		this.setState({
 			user: {
 				username: user.username,
@@ -56,11 +48,11 @@ class App extends React.Component {
 			},
 			allowLogin: true
 		})
+
+		dataService.login(user);
 	}
 
 	componentDidUpdate() {
-		console.log(this.state);
-		// localStorage.setItem('user', JSON.stringify(this.state.user));
 	}
 }
 

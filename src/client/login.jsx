@@ -2,6 +2,8 @@ import React from 'react';
 // import ReactDOM from 'react-dom';
 import { CardPanel } from 'react-materialize';
 
+import { dataService } from './service/data-service.js';
+
 export class Login extends React.Component {
 	constructor(props) {
 		super(props);
@@ -22,7 +24,10 @@ export class Login extends React.Component {
 			
 		}
 
-		this.state = { user: user }
+		this.state = { 
+			user: user,
+			preventLogin: true 
+		}
 
 		
 		// Fix 'this' in methods which use events
@@ -36,7 +41,7 @@ export class Login extends React.Component {
 		return (
 			<div className="login-view">
 				<div className="login-card-wrapper">
-					<CardPanel className="login-card z-depth-4">
+					<CardPanel className="login-card z-depth-3">
 						<AvatarSelector onAvatarSelect={this.changeAvatar} avatarID={this.state.user.avatar}/>
 						<form className="col s12" onSubmit={this.liftLogin}>
 						 	<div className='row'>
@@ -61,7 +66,7 @@ export class Login extends React.Component {
 				            <br />
 				            <center>
 				              <div className='row'>
-				                <button type='submit' name='btn_login' className='col s12 btn btn-large waves-effect teal'>Login</button>
+				                <button type='submit' name='btn_login' disabled={this.state.preventLogin} className='col s12 btn btn-large waves-effect teal'>Login</button>
 				              </div>
 				            </center>
 				         </form>
@@ -71,16 +76,8 @@ export class Login extends React.Component {
 		);
 	}
 
-	componentWillMount() {
-		// if (localStorage.getItem('user')) {
-		// 	this.setState({
-		// 		user: {
-		// 			username: JSON.parse(localStorage.getItem('user')).username,
-		// 			status: JSON.parse(localStorage.getItem('user')).status,
-		// 			avatar: JSON.parse(localStorage.getItem('user')).avatar
-		// 		}
-		// 	});
-		// }
+	componentDidMount() {
+		this.checkUsername(this.refs.username.value);
 	}
 
 	componentDidUpdate() {
@@ -89,13 +86,8 @@ export class Login extends React.Component {
 	}
 
 	changeName(event) {
-		this.setState({
-			user: {
-				username: event.target.value,
-				status: this.state.user.status,
-				avatar: this.state.user.avatar
-			}
-		});
+		name = event.target.value;
+		this.checkUsername(name);		
 	}
 
 	changeStatus(event) {
@@ -136,6 +128,35 @@ export class Login extends React.Component {
 		// console.log(this.state.user);
 
 		this.props.onLoginSubmit(this.state.user);
+	}
+
+
+	checkUsername(username) {
+		dataService.tryUser(username);
+		dataService.getUserAvailability((available) => {
+			if (available) {
+
+				this.setState({
+					user: {
+						username: username,
+						status: this.state.user.status,
+						avatar: this.state.user.avatar
+					},
+
+					preventLogin: false
+				});
+			} else {
+				this.setState({
+					user: {
+						username: username,
+						status: this.state.user.status,
+						avatar: this.state.user.avatar
+					},
+
+					preventLogin: true
+				});
+			}
+		});
 	}
 }
 
