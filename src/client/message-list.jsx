@@ -14,7 +14,8 @@ export class MessageList extends React.Component {
 		this.listenMessages = this.listenMessages.bind(this);
 
 
-		this.listenMessages();
+		this.listenMessages(this.props.room);
+		
 
 	}
 
@@ -43,8 +44,13 @@ export class MessageList extends React.Component {
 
 
 	componentDidMount() {  
-	  	const node = ReactDOM.findDOMNode(this.refs.anchorEnd);
+		const node = ReactDOM.findDOMNode(this.refs.anchorEnd);
     	node.scrollIntoView({behavior: "smooth"});
+
+    	this.listenAllMessages();
+	}
+
+	componentWillUpdate(nextProps, nextState) {
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -53,12 +59,18 @@ export class MessageList extends React.Component {
 	}
 
 
-	listenMessages() {
+	listenMessages(room) {
 
 		dataService.listenMessages((msg) => {
 			var msgList = this.state.messageList;
 			msgList.push(msg);
 			this.setState({messageList: msgList});
+		});
+	}
+
+	listenAllMessages() {
+		dataService.listenAllMessages((messages) => {
+			this.setState({messageList: messages});
 		});
 	}
 }
@@ -123,9 +135,13 @@ class TimeAgo extends React.Component {
 	}
 
 	componentDidMount() {
-		setInterval(() => {
+		this.interval = setInterval(() => {
 			this.setState(this.state);
 		}, 60000);
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.interval);
 	}
 }
 

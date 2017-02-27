@@ -33,7 +33,8 @@ export class ChatForm extends React.Component {
 
 		var message = {
 			sender: dataService.user.username,
-			body: event.target.body.value.trim()
+			body: event.target.body.value.trim(),
+			room: this.props.room
 		}
 
 		if (!message.body) {
@@ -42,7 +43,7 @@ export class ChatForm extends React.Component {
 
 		dataService.sendMessage(message);
 		
-		dataService.sendTyping(false);
+		dataService.sendTyping(false, this.props.room);
 		clearTimeout(this.state.typingTimeout);
 		this.setState({
 			typing: false,
@@ -55,7 +56,7 @@ export class ChatForm extends React.Component {
 	handleTyping(event) {
 
 		if (!this.state.typing) {
-			dataService.sendTyping(true);	
+			dataService.sendTyping(true, this.props.room);	
 		} 
 
 		clearTimeout(this.state.typingTimeout);
@@ -63,7 +64,7 @@ export class ChatForm extends React.Component {
 		this.setState({
 			typing: true,
 			typingTimeout: setTimeout(() => {
-				dataService.sendTyping(false);
+				dataService.sendTyping(false, this.props.room);
 				this.setState({
 					typing: false,
 					typingTimeout: null

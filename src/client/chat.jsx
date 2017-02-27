@@ -7,9 +7,8 @@ import {ChatBox} from './chat-box.jsx';
 export class Chat extends React.Component {
 	constructor(props) {
 		super(props);
-		// this.state = {
-		// 	messageList: []
-		// }
+		this.state = { 
+		}
 
 		// Fix 'this' in methods which use events
 		// this.handleMessageSubmit = this.handleMessageSubmit.bind(this);

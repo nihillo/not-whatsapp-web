@@ -8,9 +8,22 @@
 
 // module.exports = router;
 var io;
+const mainRoom = 'main';
 const messages = [];
 const users = [];
-const rooms = [];
+const userSockets = {};
+const channels = [
+	{
+		name: 'main'
+	},
+	{
+		name: 'Hobbies'
+	},
+	{
+		name: 'Meeting Point'
+	}
+];
+const privateSockets = [];
 
 module.exports = function(socket_io) {
 
@@ -23,6 +36,7 @@ module.exports = function(socket_io) {
 
 		// Socket associated user
 		socket.user = {};
+
 
 		// Try if username is in use on the server
 		socket.on('tryUser', function(username) {
@@ -43,14 +57,25 @@ module.exports = function(socket_io) {
 		socket.on('userLogin', function(user) {
 			
 			socket.user = user;
+			socket.room = mainRoom;
 
 			console.log(user.username + ' connected');
-			addUser(user);
+			addUser(user, socket);
+
+			socket.join(mainRoom);
+
+
+			// Send initial channel list
+			socket.emit('channelListUpdate', channels);
+
+			// Send all room messages
+			sendAllRoomMessages(socket);
 
 			let msg = {
 
 				sender: 'Server',
-				body: user.username + ' connected'
+				body: user.username + ' connected',
+				room: socket.room
 			}
 
 			registerMessage(msg);
@@ -73,8 +98,8 @@ module.exports = function(socket_io) {
 
 	        let msg = {
 				sender: 'Server',
-				body: socket.user.username + ' disconnected'
-
+				body: socket.user.username + ' disconnected',
+				room: socket.room
 			}
 
 			registerMessage(msg);
@@ -82,11 +107,67 @@ module.exports = function(socket_io) {
 	    });
 
 
-	    // Recive message when a user starts/stops typing
-	    socket.on('typing', function(isTyping) {
-	    	socket.broadcast.emit('userTyping', socket.user.username, isTyping);
+	    // Receive message when a user starts/stops typing
+	    socket.on('typing', function(isTyping, room) {
+	    	
+			// if (room == 'main') {
+			// 	socket.broadcast.emit('userTyping', socket.user.username, isTyping);
+			// } else {
+				socket.broadcast.to(room).emit('userTyping', socket.user.username, isTyping);
+				// io.sockets.in(room).emit('userTyping', socket.user.username, isTyping);
+			// }
+	    });
 
-	    	console.log(socket.user.username + ' typing: ' + isTyping);
+
+	    // Receive private conversation requests
+	    socket.on('openPrivate', function(user) {
+	    	// console.log(socket.user.username + ' - ' + user);
+	    	var room = {}
+
+	    	if (privateSockets.indexOf(user + ':' + socket.user.username) != -1) {
+	    		room.id = user + ':' + socket.user.username
+	    	} else {
+	    		room.id = socket.user.username + ':' + user;
+	    	}
+
+	    	privateSockets.push(room.id);
+
+	    	socket.leave(socket.room);
+	    	userSockets[user].leave(socket.room);
+	    	
+	    	socket.room = room.id;
+	    	
+	    	socket.join(socket.room);
+	   		userSockets[user].join(socket.room);
+
+	   		io.sockets.in(room.id).emit('joinedRoom', room.id);
+
+	   		// Send all room messages
+			sendAllRoomMessages(socket);
+
+	    });
+
+
+	    // Open channel
+	    socket.on('openChannel', function(channel) {
+	    	// console.log(socket.user.username + ' - ' + user);s
+	    	var room = {}
+	    	room.id = channel;
+
+	    	socket.leave(socket.room);
+	    	// userSockets[user].leave(socket.room);
+	    	
+	    	socket.room = room.id;
+	    	
+	    	socket.join(socket.room);
+	   		// userSockets[user].join(socket.room);
+
+	   		io.sockets.in(room.id).emit('joinedRoom', room.id);
+
+	   		// Send all room messages
+			sendAllRoomMessages(socket);
+
+
 	    });
 	});
 
@@ -100,8 +181,10 @@ module.exports = function(socket_io) {
 }
 
 
-function addUser(user) {
+function addUser(user, socket) {
 	users.push(user);
+
+	userSockets[user.username] = socket;
 	io.sockets.emit('userListUpdate', users);
 }
 
@@ -112,6 +195,7 @@ function removeUser(user) {
 		}
 	});
 	
+	delete userSockets[user];
 
 	io.sockets.emit('userListUpdate', users);
 }
@@ -124,12 +208,19 @@ function registerMessage(msg) {
 	messages.push(msg);
 }
 
-function sendAllMessages(socket) {
-	socket.emit('allMessages', messages);
+function sendAllRoomMessages(socket) {
+	msgs = messages.filter(function(msg){
+		return (msg.room == socket.room); 
+	});
+
+	io.in(socket.room).emit('allRoomMessages', msgs);
 }
 
 function broadcastLastMessage() {
 	var lastMessage = messages[messages.length - 1];
-	io.sockets.emit('newMessage', lastMessage);
-
+	// if (lastMessage.room == 'main') {
+	// 	io.sockets.emit('newMessage', lastMessage);
+	// } else {
+		io.in(lastMessage.room).emit('newMessage', lastMessage);
+	// }
 }
